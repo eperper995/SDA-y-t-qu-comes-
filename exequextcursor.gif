@@ -1,179 +1,348 @@
-/**
- * Image Gallery iDevice
- *
- * Released under Attribution-ShareAlike 4.0 International License.
- * Author: SDWEB - Innovative Digital Solutions
- *
- * License: http://creativecommons.org/licenses/by-sa/4.0/
- */
-var $imagegallery = {
-    /**
-     * eXe idevice engine
-     * Json idevice api function
-     * Engine execution order: 1
-     *
-     * Get the base html of the idevice view
-     *
-     * @param {Object} data
-     * @param {Number} accesibility
-     * @param {String} template
-     * @returns {String}
-     */
-    renderView: function (data, accesibility, template) {
-        // Generate html content from data values
-        let htmlContent = $imagegallery.getStringGallery(data);
-        // Insert the html content inside the template
-        let html = template.replace('{content}', htmlContent);
+/*!
+	By André Rinas, www.andrerinas.de
+	Documentation, www.simplelightbox.de
+	Available for use under the MIT License
+	Version 2.10.1
+*/
+body.hidden-scroll {
+	overflow: hidden
+}
 
-        // Save html in database
-        return html;
-    },
+.sl-overlay {
+	position: fixed;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	background: #fff;
+	opacity: .7;
+	display: none;
+	z-index: 1035
+}
 
-    /**
-     * Json idevice api function
-     * Engine execution order: 2
-     *
-     * Add the behavior and other functionalities to idevice
-     *
-     * @param {Object} data
-     * @param {Number} accesibility
-     * @returns {Boolean}
-     */
-    renderBehaviour(data) {
-        const $node = $('#' + data.ideviceId),
-            isInExe = eXe.app.isInExe();
-        if (!isInExe && $node.length == 1) {
-            let gallery = $imagegallery.getStringGallery(data);
-            $node.html(gallery);
-        }
+.sl-wrapper {
+	z-index: 1040;
+	width: 100%;
+	height: 100%;
+	left: 0;
+	top: 0;
+	position: fixed
+}
 
-        // Disabled links
-        document
-            .querySelectorAll('.image-galleryIdevice .imageGallery-IDevice a')
-            .forEach((img) => {
-                img.addEventListener('click', (event) => {
-                    event.stopPropagation();
-                    event.preventDefault();
-                });
-            });
+.sl-wrapper * {
+	box-sizing: border-box
+}
 
-        // Simplelightbox
-        if (typeof SimpleLightbox !== 'undefined') {
-            this.createSLightboxGallery(data.ideviceId);
-        } else {
-            var interval = setInterval(function () {
-                if (typeof SimpleLightbox !== 'undefined') {
-                    $imagegallery.createSLightboxGallery(data.ideviceId);
-                    clearInterval(interval);
-                }
-            }, 200);
-        }
-    },
+.sl-wrapper button {
+	border: 0 none;
+	background: transparent;
+	font-size: 28px;
+	padding: 0;
+	cursor: pointer
+}
 
-    changeDirectory(file, data) {
-        const $node = $('#' + data.ideviceId),
-            isInExe = eXe.app.isInExe();
-        if (isInExe || $node.length == 0) return file;
+.sl-wrapper button:hover {
+	opacity: 0.7
+}
 
-        const pathMedia = $('html').is('#exe-index')
-            ? 'content/resources/' + data.ideviceId + '/'
-            : '../content/resources/' + data.ideviceId + '/';
+.sl-wrapper .sl-close {
+	display: none;
+	position: fixed;
+	right: 30px;
+	top: 30px;
+	z-index: 10060;
+	margin-top: -14px;
+	margin-right: -14px;
+	height: 44px;
+	width: 44px;
+	line-height: 44px;
+	font-family: Arial, Baskerville, monospace;
+	color: #000;
+	font-size: 3rem
+}
 
-        const parts = file.split(/[/\\]/),
-            name = parts.pop(),
-            dir = pathMedia.replace(/[/\\]+$/, '');
-        return dir + '/' + name;
-    },
+.sl-wrapper .sl-counter {
+	display: none;
+	position: fixed;
+	top: 30px;
+	left: 30px;
+	z-index: 1060;
+	color: #000;
+	font-size: 1rem
+}
 
-    getStringGallery: function (data) {
-        let ideviceId = data.ideviceId;
-        let idIncremental = 0;
-        let htmlContent = `
-            <div class="imageGallery-IDevice">
-                <div class="imageGallery-body">`;
-        Object.entries(data).forEach(([key, value]) => {
-            if (key !== 'ideviceId') {
-                let imageURL = $imagegallery.changeDirectory(value.img, data);
-                let thumbnailURL = $imagegallery.changeDirectory(
-                    value.thumbnail,
-                    data
-                );
-                let imageTitle = value.title;
-                let imageLinkTitle = value.linktitle;
-                let imageAuthor = value.author;
-                let imageLinkAuthor = value.linkauthor;
-                let imageLicense = value.license;
-                let imageLinkLicense = this.getLinkLicense(value.license);
-                htmlContent += `<div id="imageContainer_${idIncremental}" class="imageContainer">`;
-                htmlContent += ` <a idevice-id="${ideviceId}" title="${imageTitle}" href="${imageURL}" class="imageLink">`;
-                htmlContent += `  <div class="imageElement">`;
-                htmlContent += `   <img src="${thumbnailURL}" height="128" width="128" title="${imageTitle}" alt="${imageTitle}" titlelink="${imageLinkTitle}" author="${imageAuthor}" authorlink="${imageLinkAuthor}" license="${imageLicense}" licenselink="${imageLinkLicense}"/>`;
-                htmlContent += `  </div>`;
-                htmlContent += ` </a>`;
-                htmlContent += `</div>`;
-                idIncremental++;
-            }
-        });
-        htmlContent += `
-                </div>
-            </div>`;
-        return htmlContent;
-    },
+.sl-wrapper .sl-navigation {
+	width: 100%;
+	display: none
+}
 
-    /**
-     * Json idevice api function
-     * Engine execution order: 3
-     *
-     */
-    init: function () {},
+.sl-wrapper .sl-navigation button {
+	position: fixed;
+	top: 50%;
+	margin-top: -22px;
+	height: 44px;
+	width: 22px;
+	line-height: 44px;
+	text-align: center;
+	display: block;
+	z-index: 10060;
+	font-family: Arial, Baskerville, monospace;
+	color: #000
+}
 
-    /**
-     * Create a new simple ligthbox gallery
-     *
-     */
-    createSLightboxGallery: function (ideviceId) {
-        let selector = `[id="${ideviceId}"] .imageGallery-IDevice a`;
-        new SimpleLightbox(selector, {
-            // Custom lightbox for exe. Now we can take values from multiple attributes
-            captionsData: [
-                'title',
-                'titlelink',
-                'author',
-                'authorlink',
-                'license',
-                'licenselink',
-            ],
-            captionPosition: 'outside',
-        });
-    },
+.sl-wrapper .sl-navigation button.sl-next {
+	right: 5px;
+	font-size: 2rem
+}
 
-    getLinkLicense: function (attrLicense) {
-        let linkLicense = '';
-        if (
-            attrLicense === 'pd' ||
-            attrLicense === 'copyright' ||
-            attrLicense === ''
-        ) {
-            linkLicense = '';
-        } else if (attrLicense === 'gnu-gpl') {
-            linkLicense = 'http://www.gnu.org/licenses/gpl.html';
-        } else if (attrLicense === 'CC0') {
-            linkLicense =
-                'http://creativecommons.org/publicdomain/zero/1.0/deed';
-        } else if (
-            attrLicense === 'CC-BY' ||
-            attrLicense === 'CC-BY-SA' ||
-            attrLicense === 'CC-BY-ND' ||
-            attrLicense === 'CC-BY-NC' ||
-            attrLicense === 'CC-BY-NC-SA' ||
-            attrLicense === 'CC-BY-NC-ND'
-        ) {
-            linkLicense = 'http://creativecommons.org/licenses/';
-        } else {
-            // linkLicense = attrLicense;
-            linkLicense = '';
-        }
+.sl-wrapper .sl-navigation button.sl-prev {
+	left: 5px;
+	font-size: 2rem
+}
 
-        return linkLicense;
-    },
-};
+@media (min-width: 35.5em) {
+	.sl-wrapper .sl-navigation button {
+		width: 44px
+	}
+
+	.sl-wrapper .sl-navigation button.sl-next {
+		right: 10px;
+		font-size: 3rem
+	}
+
+	.sl-wrapper .sl-navigation button.sl-prev {
+		left: 10px;
+		font-size: 3rem
+	}
+}
+
+@media (min-width: 50em) {
+	.sl-wrapper .sl-navigation button {
+		width: 44px
+	}
+
+	.sl-wrapper .sl-navigation button.sl-next {
+		right: 20px;
+		font-size: 3rem
+	}
+
+	.sl-wrapper .sl-navigation button.sl-prev {
+		left: 20px;
+		font-size: 3rem
+	}
+}
+
+.sl-wrapper.sl-dir-rtl .sl-navigation {
+	direction: ltr
+}
+
+.sl-wrapper .sl-image {
+	position: fixed;
+	-ms-touch-action: none;
+	touch-action: none;
+	z-index: 10000
+}
+
+.sl-wrapper .sl-image img {
+	margin: 0;
+	padding: 0;
+	display: block;
+	border: 0 none;
+	width: 100%;
+	height: auto
+}
+
+@media (min-width: 35.5em) {
+	.sl-wrapper .sl-image img {
+		border: 0 none
+	}
+}
+
+@media (min-width: 50em) {
+	.sl-wrapper .sl-image img {
+		border: 0 none
+	}
+}
+
+.sl-wrapper .sl-image iframe {
+	background: #000;
+	border: 0 none
+}
+
+@media (min-width: 35.5em) {
+	.sl-wrapper .sl-image iframe {
+		border: 0 none
+	}
+}
+
+@media (min-width: 50em) {
+	.sl-wrapper .sl-image iframe {
+		border: 0 none
+	}
+}
+
+.sl-wrapper .sl-image .sl-caption {
+	display: none;
+	padding: 10px;
+	color: #fff;
+	background: rgba(0, 0, 0, 0.8);
+	font-size: 1rem;
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0
+}
+
+.sl-wrapper .sl-image .sl-caption.pos-top {
+	bottom: auto;
+	top: 0
+}
+
+.sl-wrapper .sl-image .sl-caption.pos-outside {
+	bottom: auto
+}
+
+.sl-wrapper .sl-image .sl-download {
+	display: none;
+	position: absolute;
+	bottom: 5px;
+	right: 5px;
+	color: #000;
+	z-index: 1060
+}
+
+/* +++++ SDWEB +++++ */
+.sl-wrapper a{
+	color: aqua;
+}
+
+.sl-wrapper a{
+	padding-right: 10px;
+}
+
+.sl-wrapper span{
+	padding-right: 10px;
+}
+
+.sl-wrapper .license,
+.sl-wrapper .license a,
+.sl-wrapper .custom-license,
+.sl-wrapper .custom-license a{
+	padding-right: 0;
+}
+/* +++++++++++++++++ */
+
+.sl-spinner {
+	display: none;
+	border: 5px solid #333;
+	border-radius: 40px;
+	height: 40px;
+	left: 50%;
+	margin: -20px 0 0 -20px;
+	opacity: 0;
+	position: fixed;
+	top: 50%;
+	width: 40px;
+	z-index: 1007;
+	-webkit-animation: pulsate 1s ease-out infinite;
+	-moz-animation: pulsate 1s ease-out infinite;
+	-ms-animation: pulsate 1s ease-out infinite;
+	-o-animation: pulsate 1s ease-out infinite;
+	animation: pulsate 1s ease-out infinite
+}
+
+.sl-scrollbar-measure {
+	position: absolute;
+	top: -9999px;
+	width: 50px;
+	height: 50px;
+	overflow: scroll
+}
+
+.sl-transition {
+	transition: -moz-transform ease 200ms;
+	transition: -ms-transform ease 200ms;
+	transition: -o-transform ease 200ms;
+	transition: -webkit-transform ease 200ms;
+	transition: transform ease 200ms
+}
+
+@-webkit-keyframes pulsate {
+	0% {
+		transform: scale(0.1);
+		opacity: 0.0
+	}
+
+	50% {
+		opacity: 1
+	}
+
+	100% {
+		transform: scale(1.2);
+		opacity: 0
+	}
+}
+
+@keyframes pulsate {
+	0% {
+		transform: scale(0.1);
+		opacity: 0.0
+	}
+
+	50% {
+		opacity: 1
+	}
+
+	100% {
+		transform: scale(1.2);
+		opacity: 0
+	}
+}
+
+@-moz-keyframes pulsate {
+	0% {
+		transform: scale(0.1);
+		opacity: 0.0
+	}
+
+	50% {
+		opacity: 1
+	}
+
+	100% {
+		transform: scale(1.2);
+		opacity: 0
+	}
+}
+
+@-o-keyframes pulsate {
+	0% {
+		transform: scale(0.1);
+		opacity: 0.0
+	}
+
+	50% {
+		opacity: 1
+	}
+
+	100% {
+		transform: scale(1.2);
+		opacity: 0
+	}
+}
+
+@-ms-keyframes pulsate {
+	0% {
+		transform: scale(0.1);
+		opacity: 0.0
+	}
+
+	50% {
+		opacity: 1
+	}
+
+	100% {
+		transform: scale(1.2);
+		opacity: 0
+	}
+}
